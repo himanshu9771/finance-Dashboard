@@ -1,19 +1,6 @@
 💎 Finova — Personal Finance Dashboard
 Finova is a sleek, modern, and responsive Personal Finance Dashboard built with vanilla HTML, CSS, and JavaScript. It simulates a full-stack application experience using localStorage for data persistence, offering a complete solution for tracking income, expenses, and financial health without requiring a backend database.
 
-GitHub last commitGitHub licenseMade with JavaScript
-
-🚀 Live Demo
-Click here to view the Live Demo
-(Replace the link above with your actual GitHub Pages URL after deployment)
-
-📸 Screenshots
-Dashboard View (Dark Mode)Dashboard Dark
-
-Transactions View (Light Mode)Transactions Light
-
-(To add real screenshots: drag and drop images into your GitHub repo and update the image links above)
-
 ✨ Key Features
 📊 Dashboard & Analytics
 Real-time Overview: Instantly view Total Balance, Total Income, Expenses, and Savings Rate.
@@ -81,4 +68,4 @@ Logout: Click the power button (⏻) at the bottom of the sidebar to return to t
 📄 License
 This project is open source and available under the MIT License.
 
-Made with ❤️ by Your Name
+Made with ❤️ by Shivam 
