@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finova — Personal Finance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="role-viewer" data-theme="dark">
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="login-page" id="loginScreen">
+    <div class="login-box">
+        <div class="logo-mark" style="justify-content:center; margin-bottom: 24px;">
+            <div class="logo-icon" style="width:50px; height:50px; font-size:24px;">💎</div>
+        </div>
+        <h2 style="font-family:var(--font-display); text-align:center; margin-bottom:8px;">Welcome to Finova</h2>
+        <p style="text-align:center; color:var(--text2); margin-bottom:32px;">Sign in to access your dashboard</p>
+        
+        <div class="form-group">
+            <label class="form-label">Select Role</label>
+            <select class="form-input" id="loginRole">
+                <option value="viewer">👁 Viewer (Read-only)</option>
+                <option value="admin">⚡ Admin (Full Access)</option>
+            </select>
+        </div>
+        
+        <button class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="handleLogin()">
+            Sign In
+        </button>
+        
+        <div style="margin-top:24px; text-align:center; font-size:12px; color:var(--text3);">
+            This is a demo simulation. No password required.
+        </div>
+    </div>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">💎</div>
+      <div class="logo-text">Fin<span>ova</span></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+      <span class="nav-icon">⬡</span> Dashboard
+    </a>
+    <a class="nav-item" data-page="transactions" onclick="navigate('transactions')">
+      <span class="nav-icon">⇄</span> Transactions
+      <span class="nav-badge" id="txnBadge">0</span>
+    </a>
+    <a class="nav-item" data-page="insights" onclick="navigate('insights')">
+      <span class="nav-icon">◈</span> Insights
+    </a>
+    
+    <!-- ADMIN ONLY LINK -->
+    <div class="nav-section-label admin-only block">Admin</div>
+    <a class="nav-item admin-only" data-page="admin" onclick="navigate('admin')">
+      <span class="nav-icon">⚡</span> Admin Panel
+    </a>
+
+    <div class="nav-section-label">Preferences</div>
+    <a class="nav-item" data-page="settings" onclick="navigate('settings')">
+      <span class="nav-icon">⚙</span> Settings
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-profile-area">
+        <div class="avatar" style="width:36px;height:36px;" id="userAvatar">AK</div>
+        <div class="user-info">
+            <div class="user-name" id="sidebarName">Alex Kumar</div>
+            <div class="user-role" id="sidebarRole">Viewer</div>
+        </div>
+        <button class="icon-btn logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main" id="mainApp">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+      <button class="btn btn-primary admin-only" onclick="openModal()">＋ Add Transaction</button>
+      <button class="icon-btn" onclick="exportCSV()" title="Export CSV">⇣</button>
+      <div class="role-badge" id="roleBadge">👁 Viewer</div>
+    </div>
+  </header>
+
+  <!-- ═══ PAGE: DASHBOARD ═══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h1 id="greetingHeader">Good morning, Alex ✦</h1>
+      <p>Here's your financial overview for <span id="currentMonth">this month</span></p>
+    </div>
+    <div class="grid-4 mb-20" id="statCards">
+      <div class="stat-card balance">
+        <div class="stat-label"><span class="stat-icon purple">◈</span>Total Balance</div>
+        <div class="stat-value" id="statBalance">—</div>
+        <div class="stat-sub"><span class="change-up">↑ 4.2%</span> vs last month</div>
+      </div>
+      <div class="stat-card income">
+        <div class="stat-label"><span class="stat-icon green">↑</span>Total Income</div>
+        <div class="stat-value" id="statIncome">—</div>
+        <div class="stat-sub"><span class="change-up">↑ 8.1%</span> vs last month</div>
+      </div>
+      <div class="stat-card expense">
+        <div class="stat-label"><span class="stat-icon red">↓</span>Total Expenses</div>
+        <div class="stat-value" id="statExpense">—</div>
+        <div class="stat-sub"><span class="change-down">↑ 3.5%</span> vs last month</div>
+      </div>
+      <div class="stat-card savings">
+        <div class="stat-label"><span class="stat-icon amber">◇</span>Savings Rate</div>
+        <div class="stat-value" id="statSavings">—</div>
+        <div class="stat-sub"><span class="change-up">↑ 2.1%</span> improvement</div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-20">
+      <div class="card card-lg">
+        <div class="section-header">
+          <div class="section-title">Balance Trend</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost trend-btn" style="padding:5px 10px;font-size:12px;" onclick="setTrendPeriod(3,this)">3M</button>
+            <button class="btn btn-ghost trend-btn" style="padding:5px 10px;font-size:12px;" onclick="setTrendPeriod(6,this)">6M</button>
+            <button class="btn btn-ghost trend-btn active" style="padding:5px 10px;font-size:12px;" onclick="setTrendPeriod(12,this)">12M</button>
+          </div>
+        </div>
+        <div class="chart-wrap-lg"><canvas id="balanceTrendChart"></canvas></div>
+      </div>
+      <div class="card card-lg">
+        <div class="section-header">
+          <div class="section-title">Spending Breakdown</div>
+          <span style="font-size:12px;color:var(--text3)">This month</span>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div style="width:140px;height:140px;flex-shrink:0;"><canvas id="spendDonutChart"></canvas></div>
+          <div class="donut-legend" id="donutLegend" style="flex:1;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-lg">
+        <div class="section-header">
+          <div class="section-title">Income vs Expenses</div>
+          <span style="font-size:12px;color:var(--text3)">Last 6 months</span>
+        </div>
+        <div class="chart-wrap"><canvas id="incomeExpenseChart"></canvas></div>
+      </div>
+      <div class="card card-lg">
+        <div class="section-header">
+          <div class="section-title">Recent Transactions</div>
+          <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="navigate('transactions')">See all →</button>
+        </div>
+        <div id="recentTxns"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: TRANSACTIONS ═══ -->
+  <div class="page" id="page-transactions">
+    <div class="page-header">
+      <h1>Transactions</h1>
+      <p>View, search, filter and manage all transactions</p>
+    </div>
+    <div class="viewer-hint"><span>ℹ</span> You're in viewer mode. Switch to Admin to add or edit transactions.</div>
+    <div class="txn-controls">
+      <div class="search-box">
+        <span style="color:var(--text3);font-size:14px;">⌕</span>
+        <input type="text" id="searchInput" placeholder="Search transactions…" oninput="renderTransactions()">
+      </div>
+      <select class="filter-select" id="filterType" onchange="renderTransactions()">
+        <option value="">All types</option>
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+      <select class="filter-select" id="filterCat" onchange="renderTransactions()"><option value="">All categories</option></select>
+      <select class="filter-select" id="filterMonth" onchange="renderTransactions()"><option value="">All months</option></select>
+      <button class="btn btn-ghost" onclick="clearFilters()">✕ Clear</button>
+      <button class="btn btn-primary admin-only" onclick="openModal()">＋ Add</button>
+    </div>
+    <div class="card" style="padding:0;">
+      <div class="txn-table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th onclick="sortBy('date')">Date <span class="sort-icon" data-col="date">▼</span></th>
+              <th onclick="sortBy('description')">Description <span class="sort-icon" data-col="description">▼</span></th>
+              <th onclick="sortBy('category')">Category <span class="sort-icon" data-col="category">▼</span></th>
+              <th onclick="sortBy('type')">Type <span class="sort-icon" data-col="type">▼</span></th>
+              <th onclick="sortBy('amount')" style="text-align:right;">Amount <span class="sort-icon" data-col="amount">▼</span></th>
+              <th class="admin-only">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="txnTableBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty-state" style="display:none;"><div class="icon">◫</div><p>No transactions found.</p></div>
+      <div class="pagination">
+        <span id="paginationInfo" style="color:var(--text2)"></span>
+        <div class="page-btns" id="pageButtons"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: INSIGHTS ═══ -->
+  <div class="page" id="page-insights">
+    <div class="page-header">
+      <h1>Insights</h1>
+      <p>Understand your financial patterns and spending habits</p>
+    </div>
+    <div class="grid-3 mb-20" id="insightCards"></div>
+    <div class="grid-2 mb-20">
+      <div class="card card-lg">
+        <div class="section-header"><div class="section-title">Monthly Comparison</div></div>
+        <div class="month-comparison" id="monthComparison"></div>
+        <div class="chart-wrap"><canvas id="monthlyBarChart"></canvas></div>
+      </div>
+      <div class="card card-lg">
+        <div class="section-header"><div class="section-title">Spending by Category</div></div>
+        <div class="progress-bar-wrap" id="catProgress"></div>
+      </div>
+    </div>
+    <div class="card card-lg">
+      <div class="section-header"><div class="section-title">Financial Health Metrics</div></div>
+      <div id="healthMetrics"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: ADMIN PANEL ═══ -->
+  <div class="page" id="page-admin">
+    <div class="page-header">
+      <h1>Admin Panel</h1>
+      <p>Manage application data, users, and global settings</p>
+    </div>
+
+    <div class="grid-2">
+        <div class="card card-lg">
+            <div class="section-header"><div class="section-title">User Management</div></div>
+            <div class="form-group">
+                <label class="form-label">Current Active Role</label>
+                <div class="role-badge admin" style="width:fit-content; margin-bottom:12px;">⚡ Active Session</div>
+                <p style="font-size:13px; color:var(--text2); margin-bottom:16px;">
+                    You are currently logged in as an <strong>Administrator</strong>. You have full access to add, edit, and delete records.
+                </p>
+                <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="card card-lg">
+            <div class="section-header"><div class="section-title">Quick Actions</div></div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <button class="btn btn-primary" onclick="openModal()">＋ Add New Transaction</button>
+                <button class="btn btn-ghost" onclick="exportCSV()">⇣ Export All Data (CSV)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-lg" style="margin-top:16px; border-color:var(--red);">
+        <div class="section-header">
+            <div class="section-title" style="color:var(--red);">Danger Zone</div>
+        </div>
+        <p style="font-size:13px; color:var(--text2); margin-bottom:16px;">
+            Resetting data will clear all local storage and restore mock data. This action simulates a system wipe.
+        </p>
+        <button class="btn btn-danger" onclick="resetAllData()">⌀ Reset All Application Data</button>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: SETTINGS ═══ -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <h1>Settings</h1>
+      <p>Manage your account and preferences</p>
+    </div>
+    <div class="grid-2">
+        <div class="card card-lg">
+            <div class="section-header"><div class="section-title">Profile & Appearance</div></div>
+            <div class="form-group">
+                <label class="form-label">User Name</label>
+                <input class="form-input" type="text" id="settingsName" value="Alex Kumar">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Theme</label>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-ghost" id="btnThemeDark" onclick="setTheme('dark')" style="flex:1;">Dark Mode</button>
+                    <button class="btn btn-ghost" id="btnThemeLight" onclick="setTheme('light')" style="flex:1;">Light Mode</button>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+                <button class="btn btn-primary" onclick="saveProfileSettings()">Save Profile</button>
+            </div>
+        </div>
+
+        <div class="card card-lg">
+            <div class="section-header"><div class="section-title">Session</div></div>
+            <div class="form-group">
+                <label class="form-label">Current Role</label>
+                <div class="role-badge" id="settingsRoleDisplay" style="width:fit-content; margin-bottom:12px;">👁 Viewer</div>
+                <p style="font-size:12px; color:var(--text3); margin-bottom:16px;">
+                    To switch roles, you must log out and log back in.
+                </p>
+                <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Transaction</div>
+      <button class="icon-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input class="form-input" type="text" id="fDesc" placeholder="e.g. Netflix subscription">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input class="form-input" type="number" id="fAmount" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" id="fType">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input" id="fCat">
+          <option value="food">Food</option>
+          <option value="transport">Transport</option>
+          <option value="shopping">Shopping</option>
+          <option value="utilities">Utilities</option>
+          <option value="health">Health</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="salary">Salary</option>
+          <option value="freelance">Freelance</option>
+          <option value="investment">Investment</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="fDate">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTransaction()" id="saveBtn">Save Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
