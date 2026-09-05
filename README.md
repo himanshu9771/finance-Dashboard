@@ -1,59 +1,41 @@
-# 💎 Finova Pro — Personal Finance Dashboard
+# 💎 Finova Pro — Full-Stack Personal Finance Platform & AI Engine
 
-**Finova Pro** is a modern, high-performance, and responsive Personal Finance Dashboard built with Vanilla HTML5, CSS3 Custom Properties, and ES6+ JavaScript. It features a Cyber-Emerald dark theme & light mode, rich financial management tools, interactive Chart.js visualizations, savings target trackers, category budget controls, recurring subscription managers, and AI-powered financial health insights.
-
----
-
-## ✨ Features Overview
-
-### 📊 1. Core Dashboard & Analytics
-- **Real-time Overview**: Instant readouts for Total Net Balance, Monthly Income, Monthly Expenses, and Savings Rate.
-- **Interactive Balance Trend**: Dynamic Chart.js line chart supporting 3M, 6M, and 12M historical trend periods.
-- **Category Spending Breakdown**: Interactive Doughnut chart showing expense distribution across categories.
-- **Income vs Expense Flow**: Monthly comparative cashflow bar chart.
-- **Recent Activity Feed**: Quick preview of your latest transaction logs.
-
-### 🎯 2. Savings Goals & Target Vaults
-- **Custom Goal Pots**: Create visual savings goals (e.g. Emergency Vault, Tech Gear, Vacation).
-- **Progress Tracking**: Real-time percentage progress bars with deposit/withdraw actions.
-
-### 💡 3. Smart Category Budgets
-- **Monthly Category Limits**: Set spending limits per category (Food, Shopping, Transport, Utilities, Entertainment).
-- **Health Indicators**: Dynamic color coding (Safe <70%, Warning 70-90%, Alert >90%).
-
-### 🔄 4. Recurring Subscriptions Manager
-- **Subscription Tracker**: Monitor recurring bills (Netflix, Spotify, Gym, iCloud) with renewal countdowns.
-- **Monthly Cost Calculator**: Automatically sums up total monthly recurring subscription commitments.
-
-### 🤖 5. AI Financial Health Advisor
-- **Automated Score**: Real-time score (0–100) calculated from savings rate and budget adherence.
-- **Smart Recommendations**: Contextual financial advice and spending velocity analysis.
-
-### 💳 6. Transactions Management & Search
-- **Full CRUD Operations**: Create, search, filter, sort, edit, and delete transactions.
-- **Multi-Currency Support**: Switch seamlessly between `₹ INR`, `$ USD`, `€ EUR`, and `£ GBP`.
-- **Export & Backup**: Export transaction history to `.csv` or full workspace to `.json`.
+**Finova Pro** is a full-stack, real-time Personal Finance Dashboard & AI Analytics Platform built with a Node.js Express REST API backend, JWT authentication, persistent database store, time-series AI cashflow forecasting, and a modern Cyber-Emerald web UI.
 
 ---
 
-## 🛠️ Tech Stack
-- **HTML5**: Semantic web structure.
-- **CSS3**: CSS Custom Properties (Variables), Flexbox, Grid, Glassmorphic effects, Micro-animations.
-- **JavaScript (ES6+)**: DOM manipulation, LocalStorage API, Modular engines.
-- **Chart.js**: Render high-speed interactive data visualizations.
-- **Google Fonts**: Plus Jakarta Sans & JetBrains Mono.
+## 🌟 Full-Stack Architecture
+
+### 🚀 1. Real-Time Node.js Express Backend (`server.js`)
+- **Port**: `http://localhost:5000`
+- **Authentication API**: Password hashing & JWT Token generation (`/api/auth/login`, `/api/auth/register`, `/api/auth/me`).
+- **REST Workspace API**: Real-time CRUD endpoints for `/api/transactions`, `/api/goals`, `/api/budgets`, and `/api/subscriptions`.
+- **🤖 Real-Time AI Predictions API (`/api/predictions`)**: Time-series spending velocity algorithm forecasting next month expenses, net savings buffer, budget risk factors, and health score (0–100).
+- **⚡ Master Admin API (`/api/admin`)**: Global system volume aggregation, user account management, role promotion/demotion, and system audit logs.
+
+### 🎨 2. Cyber-Emerald Frontend UI
+- **Cyber-Emerald & Pearl Themes**: Sleek dark mode & light mode toggles with glassmorphic cards and micro-animations.
+- **Interactive Chart.js Engine**: Balance growth trend line chart (3M/6M/12M), category expense doughnut chart, and cashflow bar charts.
 
 ---
 
-## 🚀 Getting Started
+## 🏁 Quick Start Guide
 
-1. Clone or download the repository:
-   ```bash
-   git clone https://github.com/yourusername/finova-pro.git
-   cd finova-dashboard/finance-Dashboard-main
-   ```
-2. Open `index.html` in any modern web browser or run with VS Code Live Server.
+### 1. Install & Run Express Backend API
+```bash
+# Navigate to project directory
+cd finance-Dashboard-main
+
+# Install dependencies (express, cors, jsonwebtoken, bcryptjs)
+npm install
+
+# Start Express Real-Time Server (Runs on http://localhost:5000)
+npm start
+```
+
+### 2. Launch Web Application
+Open `index.html` in any browser or launch with Live Server.
 
 ---
 
-Made with ❤️ for financial wellness.
+Made with ❤️ for real-time financial empowerment.

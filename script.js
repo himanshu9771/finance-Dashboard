@@ -1,35 +1,14 @@
 /* ═════════════════════════════════════════════════════════════════════
-   FINOVA PRO - WORKSPACE LOGIC & MULTI-USER AUTH ENGINE
+   FINOVA PRO - FRONTEND API CLIENT & REAL-TIME INTEGRATION ENGINE
    ═════════════════════════════════════════════════════════════════════ */
 
-// ── Default Mock Users & Datasets ──
-const DEFAULT_USERS = [
-  { id: "u1", name: "Alex Kumar", email: "alex@finova.io", role: "user", avatar: "AK" },
-  { id: "u2", name: "Sarah Chen", email: "sarah@finova.io", role: "user", avatar: "SC" },
-  { id: "u3", name: "Admin Master", email: "admin@finova.io", role: "admin", avatar: "AD" }
-];
+const API_BASE_URL = 'http://localhost:5000/api';
 
-const MOCK_TRANSACTIONS_ALEX = [
-  { id: 1, description: "Monthly Salary", category: "salary", type: "income", amount: 85000, date: "2025-01-31" },
-  { id: 2, description: "Grocery Supermarket", category: "food", type: "expense", amount: 3400, date: "2025-01-28" },
-  { id: 3, description: "Netflix 4K Ultra", category: "entertainment", type: "expense", amount: 649, date: "2025-01-27" },
-  { id: 4, description: "Electricity & Utility Bill", category: "utilities", type: "expense", amount: 1850, date: "2025-01-25" },
-  { id: 5, description: "Freelance UI Design Project", category: "freelance", type: "income", amount: 24000, date: "2025-01-22" },
-  { id: 6, description: "Uber Rides", category: "transport", type: "expense", amount: 1240, date: "2025-01-20" },
-  { id: 7, description: "Gourmet Dinner Party", category: "food", type: "expense", amount: 2800, date: "2025-01-18" }
-];
-
-const MOCK_TRANSACTIONS_SARAH = [
-  { id: 101, description: "Client Consultancy Fee", category: "freelance", type: "income", amount: 120000, date: "2025-01-30" },
-  { id: 102, description: "International Flight", category: "transport", type: "expense", amount: 38000, date: "2025-01-26" },
-  { id: 103, description: "Boutique Hotel Stay", category: "shopping", type: "expense", amount: 14500, date: "2025-01-24" },
-  { id: 104, description: "Tech Laptop Equipment", category: "shopping", type: "expense", amount: 65000, date: "2025-01-15" }
-];
-
+// Default Fallback Categories
 const DEFAULT_CATEGORIES = {
   food: { name: "Food & Dining", icon: "🍔", color: "#10b981" },
   transport: { name: "Transport & Travel", icon: "🚗", color: "#06b6d4" },
-  shopping: { name: "Shopping", icon: "🛍️", color: "#8b5cf6" },
+  shopping: { name: "Shopping", icon: "8b5cf6" },
   utilities: { name: "Utilities & Bills", icon: "⚡", color: "#f59e0b" },
   health: { name: "Health & Fitness", icon: "💊", color: "#f43f5e" },
   entertainment: { name: "Entertainment", icon: "🎬", color: "#6366f1" },
@@ -39,34 +18,17 @@ const DEFAULT_CATEGORIES = {
   other: { name: "Other", icon: "📦", color: "#64748b" }
 };
 
-const DEFAULT_GOALS = [
-  { id: 1, title: "Emergency Vault", target: 100000, current: 65000, icon: "🛡️" },
-  { id: 2, title: "Tech Gear Upgrade", target: 50000, current: 28000, icon: "💻" }
-];
+const CURRENCY_SYMBOLS = { INR: "₹", USD: "$", EUR: "€", GBP: "£" };
 
-const DEFAULT_BUDGETS = {
-  food: 12000,
-  shopping: 10000,
-  transport: 6000,
-  utilities: 5000,
-  entertainment: 4000
-};
-
-const DEFAULT_SUBSCRIPTIONS = [
-  { id: 1, name: "Netflix 4K Premium", cost: 649, day: 15, active: true },
-  { id: 2, name: "Spotify Family Plan", cost: 179, day: 10, active: true },
-  { id: 3, name: "Gym & Fitness Club", cost: 1500, day: 1, active: true }
-];
-
-// ── Application Master State ──
-let users = JSON.parse(localStorage.getItem('finova_users')) || [...DEFAULT_USERS];
-let activeUserId = localStorage.getItem('finova_active_user_id') || null;
-let currentUser = null;
+// Application Client State
+let authToken = localStorage.getItem('finova_jwt_token') || null;
+let currentUser = JSON.parse(localStorage.getItem('finova_current_user')) || null;
 
 let transactions = [];
 let goals = [];
 let budgets = {};
 let subscriptions = [];
+let aiPredictionData = null;
 
 let currency = localStorage.getItem('finova_pro_currency') || 'INR';
 let theme = localStorage.getItem('finova_pro_theme') || 'dark';
@@ -79,18 +41,37 @@ let editingTxnId = null;
 let trendPeriod = 12;
 let chartInstances = {};
 
-const CURRENCY_SYMBOLS = { INR: "₹", USD: "$", EUR: "€", GBP: "£" };
-
-// ── Master Initialization ──
-document.addEventListener('DOMContentLoaded', () => {
-  applyTheme(theme);
-  
-  if (activeUserId) {
-    currentUser = users.find(u => u.id === activeUserId);
+// ── Generic API Helper Function ──
+async function fetchAPI(endpoint, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  if (currentUser) {
-    showApp();
+  try {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'API Request failed');
+    return data;
+  } catch (err) {
+    console.warn(`API Error on ${endpoint}:`, err.message);
+    throw err;
+  }
+}
+
+// ── Master Initialization ──
+document.addEventListener('DOMContentLoaded', async () => {
+  applyTheme(theme);
+  
+  if (authToken && currentUser) {
+    try {
+      const res = await fetchAPI('/auth/me');
+      currentUser = res.user;
+      localStorage.setItem('finova_current_user', JSON.stringify(currentUser));
+      showApp();
+    } catch (e) {
+      handleLogout();
+    }
   } else {
     showLoginScreen();
   }
@@ -101,10 +82,10 @@ function showLoginScreen() {
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-function showApp() {
+async function showApp() {
   document.getElementById('loginScreen').classList.add('hidden');
-  loadUserData(currentUser.id);
   initUI();
+  await loadUserData();
   renderAllViews();
 }
 
@@ -116,112 +97,106 @@ function switchAuthTab(tab) {
   document.getElementById('formSignUp').style.display = isSignIn ? 'none' : 'block';
 }
 
-function handleLogin(event) {
+async function handleLogin(event) {
   event.preventDefault();
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
 
-  const user = users.find(u => u.email.toLowerCase() === email);
-  if (user) {
-    currentUser = user;
-    activeUserId = user.id;
-    localStorage.setItem('finova_active_user_id', activeUserId);
-    saveMasterState();
-    showApp();
+  try {
+    const res = await fetchAPI('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+
+    authToken = res.token;
+    currentUser = res.user;
+    localStorage.setItem('finova_jwt_token', authToken);
+    localStorage.setItem('finova_current_user', JSON.stringify(currentUser));
+
+    await showApp();
     showToast(`Welcome back, ${currentUser.name}!`, 'success');
-  } else {
-    showToast('Invalid account email. Try demo accounts below.', 'error');
+  } catch (err) {
+    showToast(err.message, 'error');
   }
 }
 
-function handleRegister(event) {
+async function handleRegister(event) {
   event.preventDefault();
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
   const role = document.getElementById('regRole').value;
 
-  if (users.some(u => u.email.toLowerCase() === email)) {
-    showToast('An account with this email already exists.', 'error');
-    return;
+  try {
+    const res = await fetchAPI('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, role })
+    });
+
+    authToken = res.token;
+    currentUser = res.user;
+    localStorage.setItem('finova_jwt_token', authToken);
+    localStorage.setItem('finova_current_user', JSON.stringify(currentUser));
+
+    await showApp();
+    showToast(`Account registered! Welcome ${name}`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
   }
-
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
-  const newUser = {
-    id: `u_${Date.now()}`,
-    name,
-    email,
-    role,
-    avatar: initials
-  };
-
-  users.push(newUser);
-  currentUser = newUser;
-  activeUserId = newUser.id;
-  localStorage.setItem('finova_active_user_id', activeUserId);
-
-  // Initialize empty mock data for new user
-  saveUserTransactions(newUser.id, []);
-  saveUserGoals(newUser.id, [...DEFAULT_GOALS]);
-  saveUserBudgets(newUser.id, { ...DEFAULT_BUDGETS });
-  saveUserSubs(newUser.id, [...DEFAULT_SUBSCRIPTIONS]);
-
-  saveMasterState();
-  showApp();
-  showToast(`Account created! Logged in as ${name}`, 'success');
 }
 
-function demoLogin(userId) {
-  const user = users.find(u => u.id === userId);
-  if (user) {
-    currentUser = user;
-    activeUserId = user.id;
-    localStorage.setItem('finova_active_user_id', activeUserId);
-    saveMasterState();
-    showApp();
-    showToast(`Signed in as ${user.name} (${user.role.toUpperCase()})`, 'success');
+async function demoLogin(userId) {
+  const emails = {
+    'u1': 'alex@finova.io',
+    'u2': 'sarah@finova.io',
+    'u3': 'admin@finova.io'
+  };
+  const email = emails[userId];
+  if (email) {
+    document.getElementById('loginEmail').value = email;
+    try {
+      const res = await fetchAPI('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      authToken = res.token;
+      currentUser = res.user;
+      localStorage.setItem('finova_jwt_token', authToken);
+      localStorage.setItem('finova_current_user', JSON.stringify(currentUser));
+      await showApp();
+      showToast(`Signed in as ${currentUser.name} (${currentUser.role.toUpperCase()})`, 'success');
+    } catch (err) {
+      showToast('Demo login failed: ' + err.message, 'error');
+    }
   }
 }
 
 function handleLogout() {
-  activeUserId = null;
+  authToken = null;
   currentUser = null;
-  localStorage.removeItem('finova_active_user_id');
+  localStorage.removeItem('finova_jwt_token');
+  localStorage.removeItem('finova_current_user');
   showLoginScreen();
   showToast('Logged out of workspace.', 'success');
 }
 
-// ── Multi-User Storage Layer ──
-function loadUserData(userId) {
-  let savedTxns = localStorage.getItem(`finova_txns_${userId}`);
-  if (savedTxns) {
-    transactions = JSON.parse(savedTxns);
-  } else {
-    transactions = userId === 'u2' ? [...MOCK_TRANSACTIONS_SARAH] : [...MOCK_TRANSACTIONS_ALEX];
-    saveUserTransactions(userId, transactions);
+// ── Real-Time Workspace Data Sync ──
+async function loadUserData() {
+  try {
+    const [txnsData, goalsData, budgetsData, subsData, predictions] = await Promise.all([
+      fetchAPI('/transactions'),
+      fetchAPI('/goals'),
+      fetchAPI('/budgets'),
+      fetchAPI('/subscriptions'),
+      fetchAPI('/predictions').catch(() => null)
+    ]);
+
+    transactions = txnsData || [];
+    goals = goalsData || [];
+    budgets = budgetsData || {};
+    subscriptions = subsData || [];
+    aiPredictionData = predictions;
+  } catch (err) {
+    console.warn('Failed syncing real-time backend data:', err.message);
   }
-
-  goals = JSON.parse(localStorage.getItem(`finova_goals_${userId}`)) || [...DEFAULT_GOALS];
-  budgets = JSON.parse(localStorage.getItem(`finova_budgets_${userId}`)) || { ...DEFAULT_BUDGETS };
-  subscriptions = JSON.parse(localStorage.getItem(`finova_subs_${userId}`)) || [...DEFAULT_SUBSCRIPTIONS];
-}
-
-function saveUserData() {
-  if (!activeUserId) return;
-  saveUserTransactions(activeUserId, transactions);
-  saveUserGoals(activeUserId, goals);
-  saveUserBudgets(activeUserId, budgets);
-  saveUserSubs(activeUserId, subscriptions);
-  saveMasterState();
-}
-
-function saveUserTransactions(uId, data) { localStorage.setItem(`finova_txns_${uId}`, JSON.stringify(data)); }
-function saveUserGoals(uId, data) { localStorage.setItem(`finova_goals_${uId}`, JSON.stringify(data)); }
-function saveUserBudgets(uId, data) { localStorage.setItem(`finova_budgets_${uId}`, JSON.stringify(data)); }
-function saveUserSubs(uId, data) { localStorage.setItem(`finova_subs_${uId}`, JSON.stringify(data)); }
-
-function saveMasterState() {
-  localStorage.setItem('finova_users', JSON.stringify(users));
-  localStorage.setItem('finova_pro_currency', currency);
-  localStorage.setItem('finova_pro_theme', theme);
 }
 
 // ── UI Setup ──
@@ -297,7 +272,6 @@ function toggleSidebar(open) {
   }
 }
 
-// ── Formatting ──
 function formatCurrency(amount) {
   const symbol = CURRENCY_SYMBOLS[currency] || "₹";
   return `${symbol}${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -306,7 +280,7 @@ function formatCurrency(amount) {
 function toggleTheme() {
   theme = theme === 'dark' ? 'light' : 'dark';
   applyTheme(theme);
-  saveMasterState();
+  localStorage.setItem('finova_pro_theme', theme);
   reinitCharts();
 }
 
@@ -320,7 +294,7 @@ function changeCurrency(curr) {
   currency = curr;
   document.getElementById('currencySelector').value = curr;
   document.getElementById('settingCurrency').value = curr;
-  saveMasterState();
+  localStorage.setItem('finova_pro_currency', curr);
   renderAllViews();
   showToast(`Currency updated to ${curr}`, 'success');
 }
@@ -343,7 +317,6 @@ function updateBadge() {
   document.getElementById('txnBadge').textContent = transactions.length;
 }
 
-// ── Dashboard Calculations ──
 function renderStatCards() {
   let totalIncome = 0;
   let totalExpense = 0;
@@ -395,7 +368,6 @@ function renderRecentTxns() {
   }).join('');
 }
 
-// ── Transaction Management ──
 function populateCategoryDropdowns() {
   const txCat = document.getElementById('txCategory');
   const filterCat = document.getElementById('filterCategory');
@@ -531,7 +503,7 @@ function closeModal(modalId) {
   document.getElementById(modalId).classList.remove('active');
 }
 
-function saveTransaction() {
+async function saveTransaction() {
   const desc = document.getElementById('txDesc').value.trim();
   const amount = parseFloat(document.getElementById('txAmount').value);
   const type = document.getElementById('txType').value;
@@ -543,30 +515,35 @@ function saveTransaction() {
     return;
   }
 
-  if (editingTxnId) {
-    const index = transactions.findIndex(t => t.id === editingTxnId);
-    if (index !== -1) {
-      transactions[index] = { id: editingTxnId, description: desc, amount, type, category, date };
-    }
-  } else {
-    const newId = transactions.length ? Math.max(...transactions.map(t => t.id)) + 1 : 1;
-    transactions.unshift({ id: newId, description: desc, amount, type, category, date });
-  }
+  try {
+    const newTxn = await fetchAPI('/transactions', {
+      method: 'POST',
+      body: JSON.stringify({ description: desc, amount, type, category, date })
+    });
 
-  saveUserData();
-  closeModal('txnModal');
-  renderAllViews();
-  reinitCharts();
-  showToast('Transaction saved successfully!', 'success');
-}
-
-function deleteTransaction(id) {
-  if (confirm('Are you sure you want to delete this transaction?')) {
-    transactions = transactions.filter(t => t.id !== id);
-    saveUserData();
+    transactions.unshift(newTxn);
+    closeModal('txnModal');
+    await loadUserData();
     renderAllViews();
     reinitCharts();
-    showToast('Transaction deleted.', 'success');
+    showToast('Transaction saved to real-time server!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function deleteTransaction(id) {
+  if (confirm('Are you sure you want to delete this transaction?')) {
+    try {
+      await fetchAPI(`/transactions/${id}`, { method: 'DELETE' });
+      transactions = transactions.filter(t => t.id !== id);
+      await loadUserData();
+      renderAllViews();
+      reinitCharts();
+      showToast('Transaction deleted.', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
 }
 
@@ -580,7 +557,7 @@ function renderGoals() {
     return `
       <div class="goal-card">
         <div class="goal-header">
-          <div class="goal-title">${g.icon} ${g.title}</div>
+          <div class="goal-title">${g.icon || '🎯'} ${g.title}</div>
           <span class="category-tag" style="color:var(--primary);">${percent}%</span>
         </div>
         <div class="progress-bar-container">
@@ -606,7 +583,7 @@ function openGoalModal() {
   document.getElementById('goalModal').classList.add('active');
 }
 
-function saveGoal() {
+async function saveGoal() {
   const title = document.getElementById('goalTitle').value.trim();
   const target = parseFloat(document.getElementById('goalTarget').value);
   const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
@@ -616,41 +593,49 @@ function saveGoal() {
     return;
   }
 
-  const newGoal = {
-    id: goals.length ? Math.max(...goals.map(g => g.id)) + 1 : 1,
-    title,
-    target,
-    current,
-    icon: "🎯"
-  };
-
-  goals.push(newGoal);
-  saveUserData();
-  closeModal('goalModal');
-  renderGoals();
-  showToast('New Savings Goal created!', 'success');
+  try {
+    const newGoal = await fetchAPI('/goals', {
+      method: 'POST',
+      body: JSON.stringify({ title, target, current })
+    });
+    goals.push(newGoal);
+    closeModal('goalModal');
+    renderGoals();
+    showToast('Savings goal saved to backend!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
-function depositGoal(id) {
+async function depositGoal(id) {
   const amountStr = prompt('Enter deposit amount into this goal:');
   const amount = parseFloat(amountStr);
   if (!isNaN(amount) && amount > 0) {
-    const goal = goals.find(g => g.id === id);
-    if (goal) {
-      goal.current += amount;
-      saveUserData();
+    try {
+      const updatedGoal = await fetchAPI(`/goals/${id}/deposit`, {
+        method: 'PUT',
+        body: JSON.stringify({ amount })
+      });
+      const index = goals.findIndex(g => g.id === id);
+      if (index !== -1) goals[index] = updatedGoal;
       renderGoals();
-      showToast(`Deposited ${formatCurrency(amount)} into ${goal.title}`, 'success');
+      showToast(`Deposited ${formatCurrency(amount)} into ${updatedGoal.title}`, 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
     }
   }
 }
 
-function deleteGoal(id) {
+async function deleteGoal(id) {
   if (confirm('Delete this goal?')) {
-    goals = goals.filter(g => g.id !== id);
-    saveUserData();
-    renderGoals();
-    showToast('Goal removed.', 'success');
+    try {
+      await fetchAPI(`/goals/${id}`, { method: 'DELETE' });
+      goals = goals.filter(g => g.id !== id);
+      renderGoals();
+      showToast('Goal removed.', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
 }
 
@@ -696,8 +681,8 @@ function openBudgetModal() {
   document.getElementById('budgetModal').classList.add('active');
 }
 
-function saveBudgetLimit() {
-  const cat = document.getElementById('budgetCategorySelect').value;
+async function saveBudgetLimit() {
+  const category = document.getElementById('budgetCategorySelect').value;
   const limit = parseFloat(document.getElementById('budgetLimitInput').value);
 
   if (isNaN(limit) || limit <= 0) {
@@ -705,12 +690,19 @@ function saveBudgetLimit() {
     return;
   }
 
-  budgets[cat] = limit;
-  saveUserData();
-  closeModal('budgetModal');
-  renderBudgets();
-  renderAIAdvisor();
-  showToast('Category budget limit updated!', 'success');
+  try {
+    const updatedBudgets = await fetchAPI('/budgets', {
+      method: 'POST',
+      body: JSON.stringify({ category, limit })
+    });
+    budgets = updatedBudgets;
+    closeModal('budgetModal');
+    renderBudgets();
+    renderAIAdvisor();
+    showToast('Budget limit updated!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
 // ── Subscriptions Engine ──
@@ -754,7 +746,7 @@ function openSubModal() {
   document.getElementById('subModal').classList.add('active');
 }
 
-function saveSubscription() {
+async function saveSubscription() {
   const name = document.getElementById('subName').value.trim();
   const cost = parseFloat(document.getElementById('subCost').value);
   const day = parseInt(document.getElementById('subDay').value);
@@ -764,56 +756,60 @@ function saveSubscription() {
     return;
   }
 
-  subscriptions.push({
-    id: subscriptions.length ? Math.max(...subscriptions.map(s => s.id)) + 1 : 1,
-    name,
-    cost,
-    day,
-    active: true
-  });
-
-  saveUserData();
-  closeModal('subModal');
-  renderSubscriptions();
-  showToast('Subscription added!', 'success');
-}
-
-function deleteSubscription(id) {
-  subscriptions = subscriptions.filter(s => s.id !== id);
-  saveUserData();
-  renderSubscriptions();
-  showToast('Subscription removed.', 'success');
-}
-
-// ── AI Financial Health Engine ──
-function renderAIAdvisor() {
-  let income = 0;
-  let expense = 0;
-
-  transactions.forEach(t => {
-    if (t.type === 'income') income += Number(t.amount);
-    if (t.type === 'expense') expense += Number(t.amount);
-  });
-
-  const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
-
-  let score = 70;
-  if (savingsRate > 30) score += 20;
-  else if (savingsRate > 15) score += 10;
-  else score -= 15;
-
-  let advisorMsg = "Your spending velocity is well controlled. Keep maintaining your savings buffer!";
-  if (score > 85) {
-    advisorMsg = "Outstanding financial health! Your savings rate is strong and your budget limits are intact.";
-  } else if (score < 60) {
-    advisorMsg = "Caution: Expense velocity is high this month relative to income. Consider capping dining out & discretionary shopping.";
+  try {
+    const newSub = await fetchAPI('/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify({ name, cost, day })
+    });
+    subscriptions.push(newSub);
+    closeModal('subModal');
+    renderSubscriptions();
+    showToast('Subscription saved to backend!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
   }
+}
 
+async function deleteSubscription(id) {
+  if (confirm('Remove subscription?')) {
+    try {
+      await fetchAPI(`/subscriptions/${id}`, { method: 'DELETE' });
+      subscriptions = subscriptions.filter(s => s.id !== id);
+      renderSubscriptions();
+      showToast('Subscription removed.', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+}
+
+// ── 🤖 REAL-TIME AI PREDICTIONS ENGINE ──
+async function renderAIAdvisor() {
   const scoreEl = document.getElementById('healthScoreVal');
   const textEl = document.getElementById('aiAdvisorText');
+  const burnEl = document.getElementById('burnRateVal');
 
-  if (scoreEl) scoreEl.textContent = `${Math.min(100, Math.max(0, score))} / 100`;
-  if (textEl) textEl.textContent = advisorMsg;
+  if (aiPredictionData && aiPredictionData.metrics) {
+    const m = aiPredictionData.metrics;
+    if (scoreEl) scoreEl.textContent = `${m.healthScore} / 100`;
+    if (textEl) textEl.textContent = aiPredictionData.advisorRecommendation;
+    if (burnEl) burnEl.textContent = m.overbudgetRatioPercent > 80 ? 'High' : 'Optimal';
+  } else {
+    // Local calculation fallback
+    let income = 0, expense = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income') income += Number(t.amount);
+      if (t.type === 'expense') expense += Number(t.amount);
+    });
+
+    const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
+    let score = 75;
+    if (savingsRate > 30) score += 15;
+    else if (savingsRate < 15) score -= 15;
+
+    if (scoreEl) scoreEl.textContent = `${score} / 100`;
+    if (textEl) textEl.textContent = "Real-time forecasting active. Maintain a steady savings rate buffer!";
+  }
 
   renderCategoryVelocityList();
 }
@@ -848,99 +844,87 @@ function renderCategoryVelocityList() {
   }).join('');
 }
 
-// ── MASTER ADMIN PANEL ENGINE ──
-function renderAdminPanel() {
+// ── ⚡ MASTER ADMIN API ENGINE ──
+async function renderAdminPanel() {
   if (!currentUser || currentUser.role !== 'admin') return;
 
   const tbody = document.getElementById('adminUserTableBody');
   if (!tbody) return;
 
-  let totalSystemVolume = 0;
-  let totalSystemTxns = 0;
+  try {
+    const [stats, adminUsers] = await Promise.all([
+      fetchAPI('/admin/stats'),
+      fetchAPI('/admin/users')
+    ]);
 
-  const userRowsHTML = users.map(u => {
-    const uTxns = JSON.parse(localStorage.getItem(`finova_txns_${u.id}`)) || 
-      (u.id === 'u2' ? MOCK_TRANSACTIONS_SARAH : MOCK_TRANSACTIONS_ALEX);
+    document.getElementById('adminStatUsers').textContent = stats.totalUsers;
+    document.getElementById('adminStatVolume').textContent = formatCurrency(stats.totalVolume);
+    document.getElementById('adminStatTxns').textContent = stats.totalTransactions;
 
-    let inc = 0, exp = 0;
-    uTxns.forEach(t => {
-      if (t.type === 'income') inc += Number(t.amount);
-      if (t.type === 'expense') exp += Number(t.amount);
-    });
-
-    const netBal = inc - exp;
-    totalSystemVolume += (inc + exp);
-    totalSystemTxns += uTxns.length;
-
-    const isAdmin = u.role === 'admin';
-
-    return `
-      <tr>
-        <td style="font-family:var(--font-mono); font-size:12px;">${u.id}</td>
-        <td>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div class="user-avatar" style="width:32px; height:32px; font-size:11px;">${u.avatar}</div>
-            <div>
-              <div style="font-weight:700;">${u.name}</div>
-              <div style="font-size:11px; color:var(--text-muted);">${u.email}</div>
+    tbody.innerHTML = adminUsers.map(u => {
+      const isAdmin = u.role === 'admin';
+      return `
+        <tr>
+          <td style="font-family:var(--font-mono); font-size:12px;">${u.id}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="user-avatar" style="width:32px; height:32px; font-size:11px;">${u.avatar}</div>
+              <div>
+                <div style="font-weight:700;">${u.name}</div>
+                <div style="font-size:11px; color:var(--text-muted);">${u.email}</div>
+              </div>
             </div>
-          </div>
-        </td>
-        <td><span class="${isAdmin ? 'badge-admin' : 'badge-user'}">${u.role.toUpperCase()}</span></td>
-        <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:${netBal >= 0 ? 'var(--primary)' : 'var(--rose)'};">
-          ${formatCurrency(netBal)}
-        </td>
-        <td style="text-align:center; font-family:var(--font-mono);">${uTxns.length}</td>
-        <td style="text-align:center;">
-          <div style="display:flex; justify-content:center; gap:6px;">
-            <button class="btn btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="toggleUserRole('${u.id}')">
-              ${isAdmin ? 'Demote to User' : 'Promote Admin'}
-            </button>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="inspectUserDashboard('${u.id}')">
-              👁️ Inspect
-            </button>
-            ${u.id !== currentUser.id ? `
-              <button class="icon-btn" style="width:28px; height:28px; font-size:11px; color:var(--rose);" onclick="deleteUser('${u.id}')" title="Delete User">🗑️</button>
-            ` : ''}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  tbody.innerHTML = userRowsHTML;
-
-  document.getElementById('adminStatUsers').textContent = users.length;
-  document.getElementById('adminStatVolume').textContent = formatCurrency(totalSystemVolume);
-  document.getElementById('adminStatTxns').textContent = totalSystemTxns;
-}
-
-function toggleUserRole(userId) {
-  const targetUser = users.find(u => u.id === userId);
-  if (targetUser) {
-    targetUser.role = targetUser.role === 'admin' ? 'user' : 'admin';
-    saveMasterState();
-    renderAdminPanel();
-    showToast(`Updated role for ${targetUser.name} to ${targetUser.role.toUpperCase()}`, 'success');
+          </td>
+          <td><span class="${isAdmin ? 'badge-admin' : 'badge-user'}">${u.role.toUpperCase()}</span></td>
+          <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:${u.netBalance >= 0 ? 'var(--primary)' : 'var(--rose)'};">
+            ${formatCurrency(u.netBalance || 0)}
+          </td>
+          <td style="text-align:center; font-family:var(--font-mono);">${u.txnCount || 0}</td>
+          <td style="text-align:center;">
+            <div style="display:flex; justify-content:center; gap:6px;">
+              <button class="btn btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="toggleUserRole('${u.id}')">
+                ${isAdmin ? 'Demote User' : 'Promote Admin'}
+              </button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="inspectUserDashboard('${u.id}')">
+                👁️ Inspect
+              </button>
+              ${u.id !== currentUser.id ? `
+                <button class="icon-btn" style="width:28px; height:28px; font-size:11px; color:var(--rose);" onclick="deleteUser('${u.id}')" title="Delete User">🗑️</button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.warn('Admin API Error:', err.message);
   }
 }
 
-function inspectUserDashboard(userId) {
-  demoLogin(userId);
-  navigate('dashboard');
-  showToast(`Switched workspace session to ${currentUser.name}`, 'success');
+async function toggleUserRole(userId) {
+  try {
+    const updated = await fetchAPI(`/admin/users/${userId}/role`, { method: 'PUT' });
+    showToast(`Updated role for ${updated.name} to ${updated.role.toUpperCase()}`, 'success');
+    await renderAdminPanel();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
-function deleteUser(userId) {
-  if (confirm('Delete this user account and erase their data?')) {
-    users = users.filter(u => u.id !== userId);
-    localStorage.removeItem(`finova_txns_${userId}`);
-    localStorage.removeItem(`finova_goals_${userId}`);
-    localStorage.removeItem(`finova_budgets_${userId}`);
-    localStorage.removeItem(`finova_subs_${userId}`);
-    saveMasterState();
-    renderAdminPanel();
-    showToast('User account deleted.', 'success');
+async function inspectUserDashboard(userId) {
+  await demoLogin(userId);
+  navigate('dashboard');
+}
+
+async function deleteUser(userId) {
+  if (confirm('Delete this user account?')) {
+    try {
+      await fetchAPI(`/admin/users/${userId}`, { method: 'DELETE' });
+      showToast('User account deleted.', 'success');
+      await renderAdminPanel();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
 }
 
@@ -950,46 +934,38 @@ function openAddUserModal() {
   document.getElementById('addUserModal').classList.add('active');
 }
 
-function saveNewUser() {
+async function saveNewUser() {
   const name = document.getElementById('newUserName').value.trim();
   const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
   const role = document.getElementById('newUserRole').value;
 
   if (!name || !email) {
-    showToast('Please enter user name and email.', 'error');
+    showToast('Please enter name and email.', 'error');
     return;
   }
 
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
-  const newUser = {
-    id: `u_${Date.now()}`,
-    name,
-    email,
-    role,
-    avatar: initials
-  };
-
-  users.push(newUser);
-  saveUserTransactions(newUser.id, []);
-  saveUserGoals(newUser.id, [...DEFAULT_GOALS]);
-  saveUserBudgets(newUser.id, { ...DEFAULT_BUDGETS });
-  saveUserSubs(newUser.id, [...DEFAULT_SUBSCRIPTIONS]);
-
-  saveMasterState();
-  closeModal('addUserModal');
-  renderAdminPanel();
-  showToast(`User ${name} created!`, 'success');
+  try {
+    await fetchAPI('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, role })
+    });
+    closeModal('addUserModal');
+    showToast(`User ${name} created on real-time server!`, 'success');
+    await renderAdminPanel();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
 function exportGlobalAudit() {
   const auditData = {
-    system: "Finova Pro Master Audit",
+    system: "Finova Pro Real-Time Server Audit",
     timestamp: new Date().toISOString(),
-    users,
-    systemRecords: users.map(u => ({
-      user: u,
-      txns: JSON.parse(localStorage.getItem(`finova_txns_${u.id}`)) || []
-    }))
+    user: currentUser,
+    transactions,
+    goals,
+    budgets,
+    subscriptions
   };
 
   const jsonStr = JSON.stringify(auditData, null, 2);
@@ -997,26 +973,25 @@ function exportGlobalAudit() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `finova_pro_global_audit_${new Date().toISOString().split('T')[0]}.json`;
+  link.download = `finova_pro_audit_${new Date().toISOString().split('T')[0]}.json`;
   link.click();
   URL.revokeObjectURL(url);
-  showToast('Global system audit log exported!', 'success');
+  showToast('System audit log exported!', 'success');
 }
 
-function factoryResetSystem() {
-  if (confirm('Factory reset system? This will restore default demo accounts and erase all custom user data.')) {
-    localStorage.clear();
-    users = [...DEFAULT_USERS];
-    activeUserId = 'u1';
-    currentUser = users[0];
-    localStorage.setItem('finova_active_user_id', activeUserId);
-    saveMasterState();
-    showApp();
-    showToast('System factory reset complete.', 'success');
+async function factoryResetSystem() {
+  if (confirm('Factory reset system? Erases server database.')) {
+    try {
+      await fetchAPI('/admin/reset', { method: 'POST' });
+      showToast('System reset complete.', 'success');
+      handleLogout();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
 }
 
-// ── Chart.js Visual Engine ──
+// ── Chart.js Engine ──
 function initCharts() {
   reinitCharts();
 }
@@ -1153,14 +1128,14 @@ function initAnalyticsBarChart() {
   });
 }
 
-// ── User Settings & Export ──
+// ── Preferences & Backup ──
 function saveUserSettings() {
   const newName = document.getElementById('settingName').value.trim();
   if (newName && currentUser) {
     currentUser.name = newName;
     document.getElementById('sidebarName').textContent = currentUser.name;
     document.getElementById('greetingHeader').textContent = `Welcome back, ${currentUser.name.split(' ')[0]} ✦`;
-    saveMasterState();
+    localStorage.setItem('finova_current_user', JSON.stringify(currentUser));
     showToast('Profile settings saved!', 'success');
   }
 }
@@ -1210,7 +1185,7 @@ function importJSONBackup(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target.result);
       if (data.transactions) transactions = data.transactions;
@@ -1218,10 +1193,9 @@ function importJSONBackup(event) {
       if (data.budgets) budgets = data.budgets;
       if (data.subscriptions) subscriptions = data.subscriptions;
 
-      saveUserData();
       renderAllViews();
       reinitCharts();
-      showToast('Workspace backup restored successfully!', 'success');
+      showToast('Workspace backup restored!', 'success');
     } catch (err) {
       showToast('Invalid backup file format.', 'error');
     }
@@ -1231,11 +1205,7 @@ function importJSONBackup(event) {
 
 function resetAllData() {
   if (confirm('Reset workspace data to demo records?')) {
-    transactions = currentUser.id === 'u2' ? [...MOCK_TRANSACTIONS_SARAH] : [...MOCK_TRANSACTIONS_ALEX];
-    goals = [...DEFAULT_GOALS];
-    budgets = { ...DEFAULT_BUDGETS };
-    subscriptions = [...DEFAULT_SUBSCRIPTIONS];
-    saveUserData();
+    loadUserData();
     renderAllViews();
     reinitCharts();
     showToast('Workspace data reset.', 'success');
