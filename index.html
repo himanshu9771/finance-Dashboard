@@ -1,346 +1,415 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finova — Personal Finance Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finova Pro — Personal Finance Dashboard</title>
+  
+  <!-- Google Fonts & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="role-viewer" data-theme="dark">
+<body>
 
-<!-- ═══ LOGIN SCREEN ═══ -->
-<div class="login-page" id="loginScreen">
-    <div class="login-box">
-        <div class="logo-mark" style="justify-content:center; margin-bottom: 24px;">
-            <div class="logo-icon" style="width:50px; height:50px; font-size:24px;">💎</div>
-        </div>
-        <h2 style="font-family:var(--font-display); text-align:center; margin-bottom:8px;">Welcome to Finova</h2>
-        <p style="text-align:center; color:var(--text2); margin-bottom:32px;">Sign in to access your dashboard</p>
-        
-        <div class="form-group">
-            <label class="form-label">Select Role</label>
-            <select class="form-input" id="loginRole">
-                <option value="viewer">👁 Viewer (Read-only)</option>
-                <option value="admin">⚡ Admin (Full Access)</option>
-            </select>
-        </div>
-        
-        <button class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="handleLogin()">
-            Sign In
-        </button>
-        
-        <div style="margin-top:24px; text-align:center; font-size:12px; color:var(--text3);">
-            This is a demo simulation. No password required.
-        </div>
+<div class="app-container">
+  
+  <!-- ══ Mobile Sidebar Overlay ══ -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+
+  <!-- ══ Sidebar Navigation ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-badge">💎</div>
+      <div class="logo-text">Finova <span>Pro</span></div>
     </div>
-</div>
 
-<!-- SIDEBAR OVERLAY (mobile) -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Core Workspace</div>
+      <a class="nav-link active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">⬡</span> Dashboard
+      </a>
+      <a class="nav-link" data-page="transactions" onclick="navigate('transactions')">
+        <span class="nav-icon">⇄</span> Transactions
+        <span class="nav-badge" id="txnBadge">0</span>
+      </a>
+      <a class="nav-link" data-page="budgets-goals" onclick="navigate('budgets-goals')">
+        <span class="nav-icon">🎯</span> Budgets & Goals
+      </a>
+      <a class="nav-link" data-page="subscriptions" onclick="navigate('subscriptions')">
+        <span class="nav-icon">🔄</span> Subscriptions
+      </a>
 
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">
-      <div class="logo-icon">💎</div>
-      <div class="logo-text">Fin<span>ova</span></div>
+      <div class="nav-label">Intelligence</div>
+      <a class="nav-link" data-page="analytics" onclick="navigate('analytics')">
+        <span class="nav-icon">🤖</span> AI Analytics & Health
+      </a>
+
+      <div class="nav-label">System</div>
+      <a class="nav-link" data-page="settings" onclick="navigate('settings')">
+        <span class="nav-icon">⚙️</span> Preferences & Data
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">AK</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebarName">Alex Kumar</div>
+          <div class="user-status">Pro Account</div>
+        </div>
+      </div>
     </div>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label">Overview</div>
-    <a class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
-      <span class="nav-icon">⬡</span> Dashboard
-    </a>
-    <a class="nav-item" data-page="transactions" onclick="navigate('transactions')">
-      <span class="nav-icon">⇄</span> Transactions
-      <span class="nav-badge" id="txnBadge">0</span>
-    </a>
-    <a class="nav-item" data-page="insights" onclick="navigate('insights')">
-      <span class="nav-icon">◈</span> Insights
-    </a>
+  </aside>
+
+  <!-- ══ Main Content Wrapper ══ -->
+  <div class="main-wrapper">
     
-    <!-- ADMIN ONLY LINK -->
-    <div class="nav-section-label admin-only block">Admin</div>
-    <a class="nav-item admin-only" data-page="admin" onclick="navigate('admin')">
-      <span class="nav-icon">⚡</span> Admin Panel
-    </a>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger-btn" onclick="toggleSidebar(true)">☰</button>
+        <div class="page-title" id="pageTitle">Dashboard Overview</div>
+      </div>
 
-    <div class="nav-section-label">Preferences</div>
-    <a class="nav-item" data-page="settings" onclick="navigate('settings')">
-      <span class="nav-icon">⚙</span> Settings
-    </a>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="user-profile-area">
-        <div class="avatar" style="width:36px;height:36px;" id="userAvatar">AK</div>
-        <div class="user-info">
-            <div class="user-name" id="sidebarName">Alex Kumar</div>
-            <div class="user-role" id="sidebarRole">Viewer</div>
+      <div class="topbar-actions">
+        <!-- Currency Pill -->
+        <div class="action-pill">
+          <span>Currency:</span>
+          <select id="currencySelector" onchange="changeCurrency(this.value)">
+            <option value="INR">₹ INR</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+            <option value="GBP">£ GBP</option>
+          </select>
         </div>
-        <button class="icon-btn logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
-    </div>
-  </div>
-</aside>
 
-<!-- MAIN -->
-<div class="main" id="mainApp">
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <button class="hamburger" onclick="toggleSidebar()">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="topbar-title" id="topbarTitle">Dashboard</div>
-    <div class="topbar-actions">
-      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
-      <button class="btn btn-primary admin-only" onclick="openModal()">＋ Add Transaction</button>
-      <button class="icon-btn" onclick="exportCSV()" title="Export CSV">⇣</button>
-      <div class="role-badge" id="roleBadge">👁 Viewer</div>
-    </div>
-  </header>
+        <!-- Theme Switcher -->
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+          <span id="themeIcon">☀️</span>
+        </button>
 
-  <!-- ═══ PAGE: DASHBOARD ═══ -->
-  <div class="page active" id="page-dashboard">
-    <div class="page-header">
-      <h1 id="greetingHeader">Good morning, Alex ✦</h1>
-      <p>Here's your financial overview for <span id="currentMonth">this month</span></p>
-    </div>
-    <div class="grid-4 mb-20" id="statCards">
-      <div class="stat-card balance">
-        <div class="stat-label"><span class="stat-icon purple">◈</span>Total Balance</div>
-        <div class="stat-value" id="statBalance">—</div>
-        <div class="stat-sub"><span class="change-up">↑ 4.2%</span> vs last month</div>
+        <!-- Quick Add Button -->
+        <button class="btn btn-primary" onclick="openTxnModal()">
+          <span>＋</span> Add Transaction
+        </button>
       </div>
-      <div class="stat-card income">
-        <div class="stat-label"><span class="stat-icon green">↑</span>Total Income</div>
-        <div class="stat-value" id="statIncome">—</div>
-        <div class="stat-sub"><span class="change-up">↑ 8.1%</span> vs last month</div>
-      </div>
-      <div class="stat-card expense">
-        <div class="stat-label"><span class="stat-icon red">↓</span>Total Expenses</div>
-        <div class="stat-value" id="statExpense">—</div>
-        <div class="stat-sub"><span class="change-down">↑ 3.5%</span> vs last month</div>
-      </div>
-      <div class="stat-card savings">
-        <div class="stat-label"><span class="stat-icon amber">◇</span>Savings Rate</div>
-        <div class="stat-value" id="statSavings">—</div>
-        <div class="stat-sub"><span class="change-up">↑ 2.1%</span> improvement</div>
-      </div>
-    </div>
+    </header>
 
-    <div class="grid-2 mb-20">
-      <div class="card card-lg">
-        <div class="section-header">
-          <div class="section-title">Balance Trend</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost trend-btn" style="padding:5px 10px;font-size:12px;" onclick="setTrendPeriod(3,this)">3M</button>
-            <button class="btn btn-ghost trend-btn" style="padding:5px 10px;font-size:12px;" onclick="setTrendPeriod(6,this)">6M</button>
-            <button class="btn btn-ghost trend-btn active" style="padding:5px 10px;font-size:12px;" onclick="setTrendPeriod(12,this)">12M</button>
+    <!-- Content Body Pages -->
+    <main class="content-body">
+
+      <!-- ════ PAGE 1: DASHBOARD ════ -->
+      <section class="page-view active" id="page-dashboard">
+        <div class="welcome-banner">
+          <div>
+            <div class="welcome-title" id="greetingHeader">Welcome back, Alex ✦</div>
+            <div class="welcome-subtitle">Here is your financial pulse for <span id="currentMonthStr">this month</span>.</div>
+          </div>
+          <button class="btn btn-ghost" onclick="navigate('analytics')">View AI Insights →</button>
+        </div>
+
+        <!-- Stat Cards Grid -->
+        <div class="grid-4">
+          <div class="stat-card balance">
+            <div class="stat-header">
+              <span class="stat-label">Total Net Balance</span>
+              <div class="stat-icon-wrap secondary">💎</div>
+            </div>
+            <div class="stat-value" id="statBalance">0.00</div>
+            <div class="stat-trend trend-up"><span>↑ 5.4%</span> vs last month</div>
+          </div>
+
+          <div class="stat-card income">
+            <div class="stat-header">
+              <span class="stat-label">Monthly Income</span>
+              <div class="stat-icon-wrap primary">↑</div>
+            </div>
+            <div class="stat-value" id="statIncome">0.00</div>
+            <div class="stat-trend trend-up"><span>↑ 8.2%</span> vs last month</div>
+          </div>
+
+          <div class="stat-card expense">
+            <div class="stat-header">
+              <span class="stat-label">Monthly Expenses</span>
+              <div class="stat-icon-wrap rose">↓</div>
+            </div>
+            <div class="stat-value" id="statExpense">0.00</div>
+            <div class="stat-trend trend-down"><span>↓ 2.1%</span> vs last month</div>
+          </div>
+
+          <div class="stat-card savings">
+            <div class="stat-header">
+              <span class="stat-label">Savings Rate</span>
+              <div class="stat-icon-wrap amber">🎯</div>
+            </div>
+            <div class="stat-value" id="statSavings">0.0%</div>
+            <div class="stat-trend trend-up"><span>↑ 3.5%</span> target reach</div>
           </div>
         </div>
-        <div class="chart-wrap-lg"><canvas id="balanceTrendChart"></canvas></div>
-      </div>
-      <div class="card card-lg">
-        <div class="section-header">
-          <div class="section-title">Spending Breakdown</div>
-          <span style="font-size:12px;color:var(--text3)">This month</span>
+
+        <!-- Charts Grid 1 -->
+        <div class="grid-2-1">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Balance Growth Trend</div>
+                <div class="card-subtitle">Cumulative net balance trajectory</div>
+              </div>
+              <div class="filter-group">
+                <button class="btn btn-ghost" style="padding: 4px 10px; font-size:11px;" onclick="setTrendPeriod(3, this)">3M</button>
+                <button class="btn btn-ghost" style="padding: 4px 10px; font-size:11px;" onclick="setTrendPeriod(6, this)">6M</button>
+                <button class="btn btn-primary" style="padding: 4px 10px; font-size:11px;" onclick="setTrendPeriod(12, this)">12M</button>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="balanceTrendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Category Breakdown</div>
+                <div class="card-subtitle">Expenses by category</div>
+              </div>
+            </div>
+            <div class="chart-container-sm">
+              <canvas id="categoryDonutChart"></canvas>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;gap:16px;align-items:center;">
-          <div style="width:140px;height:140px;flex-shrink:0;"><canvas id="spendDonutChart"></canvas></div>
-          <div class="donut-legend" id="donutLegend" style="flex:1;"></div>
+
+        <!-- Grid 2: Cashflow & Recent -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Income vs Expense Flow</div>
+                <div class="card-subtitle">Monthly cash comparison</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="cashflowBarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Recent Transactions</div>
+                <div class="card-subtitle">Latest activity</div>
+              </div>
+              <button class="btn btn-ghost" style="padding: 4px 10px; font-size:12px;" onclick="navigate('transactions')">View All →</button>
+            </div>
+            <div id="recentTxnList"></div>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div class="grid-2">
-      <div class="card card-lg">
-        <div class="section-header">
-          <div class="section-title">Income vs Expenses</div>
-          <span style="font-size:12px;color:var(--text3)">Last 6 months</span>
+      <!-- ════ PAGE 2: TRANSACTIONS ════ -->
+      <section class="page-view" id="page-transactions">
+        <div class="card mb-20">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Transaction Manager</div>
+              <div class="card-subtitle">Filter, search, and manage your financial log</div>
+            </div>
+            <div class="filter-group">
+              <button class="btn btn-ghost" onclick="exportCSV()">⇣ Export CSV</button>
+              <button class="btn btn-primary" onclick="openTxnModal()">＋ Add New</button>
+            </div>
+          </div>
+
+          <div class="table-controls">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="searchInput" placeholder="Search description, category, or amount..." oninput="renderTransactions()">
+            </div>
+
+            <div class="filter-group">
+              <select class="form-select" id="filterType" onchange="renderTransactions()">
+                <option value="">All Types</option>
+                <option value="income">Income Only</option>
+                <option value="expense">Expenses Only</option>
+              </select>
+
+              <select class="form-select" id="filterCategory" onchange="renderTransactions()">
+                <option value="">All Categories</option>
+              </select>
+
+              <button class="btn btn-ghost" onclick="resetFilters()">Reset Filters</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th onclick="sortBy('date')">Date <span>↕</span></th>
+                  <th onclick="sortBy('description')">Description <span>↕</span></th>
+                  <th onclick="sortBy('category')">Category <span>↕</span></th>
+                  <th onclick="sortBy('type')">Type <span>↕</span></th>
+                  <th onclick="sortBy('amount')" style="text-align: right;">Amount <span>↕</span></th>
+                  <th style="text-align: center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="txnTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="pagination-wrap">
+            <div id="paginationInfo">Showing 0 of 0 entries</div>
+            <div class="pagination-btns" id="paginationBtns"></div>
+          </div>
         </div>
-        <div class="chart-wrap"><canvas id="incomeExpenseChart"></canvas></div>
-      </div>
-      <div class="card card-lg">
-        <div class="section-header">
-          <div class="section-title">Recent Transactions</div>
-          <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="navigate('transactions')">See all →</button>
+      </section>
+
+      <!-- ════ PAGE 3: BUDGETS & GOALS ════ -->
+      <section class="page-view" id="page-budgets-goals">
+        <div class="card-header" style="margin-bottom: 20px;">
+          <div>
+            <div class="page-title">Savings Goals & Category Budgets</div>
+            <div class="card-subtitle">Track targets and stay within monthly limits</div>
+          </div>
+          <div class="filter-group">
+            <button class="btn btn-secondary" onclick="openGoalModal()">＋ New Savings Goal</button>
+            <button class="btn btn-primary" onclick="openBudgetModal()">⚙️ Set Category Budget</button>
+          </div>
         </div>
-        <div id="recentTxns"></div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══ PAGE: TRANSACTIONS ═══ -->
-  <div class="page" id="page-transactions">
-    <div class="page-header">
-      <h1>Transactions</h1>
-      <p>View, search, filter and manage all transactions</p>
-    </div>
-    <div class="viewer-hint"><span>ℹ</span> You're in viewer mode. Switch to Admin to add or edit transactions.</div>
-    <div class="txn-controls">
-      <div class="search-box">
-        <span style="color:var(--text3);font-size:14px;">⌕</span>
-        <input type="text" id="searchInput" placeholder="Search transactions…" oninput="renderTransactions()">
-      </div>
-      <select class="filter-select" id="filterType" onchange="renderTransactions()">
-        <option value="">All types</option>
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
-      </select>
-      <select class="filter-select" id="filterCat" onchange="renderTransactions()"><option value="">All categories</option></select>
-      <select class="filter-select" id="filterMonth" onchange="renderTransactions()"><option value="">All months</option></select>
-      <button class="btn btn-ghost" onclick="clearFilters()">✕ Clear</button>
-      <button class="btn btn-primary admin-only" onclick="openModal()">＋ Add</button>
-    </div>
-    <div class="card" style="padding:0;">
-      <div class="txn-table-wrap">
-        <table class="txn-table">
-          <thead>
-            <tr>
-              <th onclick="sortBy('date')">Date <span class="sort-icon" data-col="date">▼</span></th>
-              <th onclick="sortBy('description')">Description <span class="sort-icon" data-col="description">▼</span></th>
-              <th onclick="sortBy('category')">Category <span class="sort-icon" data-col="category">▼</span></th>
-              <th onclick="sortBy('type')">Type <span class="sort-icon" data-col="type">▼</span></th>
-              <th onclick="sortBy('amount')" style="text-align:right;">Amount <span class="sort-icon" data-col="amount">▼</span></th>
-              <th class="admin-only">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="txnTableBody"></tbody>
-        </table>
-      </div>
-      <div id="emptyState" class="empty-state" style="display:none;"><div class="icon">◫</div><p>No transactions found.</p></div>
-      <div class="pagination">
-        <span id="paginationInfo" style="color:var(--text2)"></span>
-        <div class="page-btns" id="pageButtons"></div>
-      </div>
-    </div>
-  </div>
+        <!-- Savings Pots Grid -->
+        <h3 class="nav-label" style="padding-left:0;">🎯 Active Savings Goals</h3>
+        <div class="grid-3" id="goalsGrid"></div>
 
-  <!-- ═══ PAGE: INSIGHTS ═══ -->
-  <div class="page" id="page-insights">
-    <div class="page-header">
-      <h1>Insights</h1>
-      <p>Understand your financial patterns and spending habits</p>
-    </div>
-    <div class="grid-3 mb-20" id="insightCards"></div>
-    <div class="grid-2 mb-20">
-      <div class="card card-lg">
-        <div class="section-header"><div class="section-title">Monthly Comparison</div></div>
-        <div class="month-comparison" id="monthComparison"></div>
-        <div class="chart-wrap"><canvas id="monthlyBarChart"></canvas></div>
-      </div>
-      <div class="card card-lg">
-        <div class="section-header"><div class="section-title">Spending by Category</div></div>
-        <div class="progress-bar-wrap" id="catProgress"></div>
-      </div>
-    </div>
-    <div class="card card-lg">
-      <div class="section-header"><div class="section-title">Financial Health Metrics</div></div>
-      <div id="healthMetrics"></div>
-    </div>
-  </div>
+        <!-- Category Budgets Grid -->
+        <h3 class="nav-label" style="padding-left:0; margin-top:20px;">💡 Monthly Category Budgets</h3>
+        <div class="grid-2" id="budgetsGrid"></div>
+      </section>
 
-  <!-- ═══ PAGE: ADMIN PANEL ═══ -->
-  <div class="page" id="page-admin">
-    <div class="page-header">
-      <h1>Admin Panel</h1>
-      <p>Manage application data, users, and global settings</p>
-    </div>
+      <!-- ════ PAGE 4: SUBSCRIPTIONS ════ -->
+      <section class="page-view" id="page-subscriptions">
+        <div class="welcome-banner" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));">
+          <div>
+            <div class="welcome-title">Recurring Subscriptions</div>
+            <div class="welcome-subtitle">Total Monthly Subscription Cost: <strong id="totalSubCost" style="color:var(--secondary); font-family:var(--font-mono);">0.00</strong></div>
+          </div>
+          <button class="btn btn-primary" onclick="openSubModal()">＋ Add Subscription</button>
+        </div>
 
-    <div class="grid-2">
-        <div class="card card-lg">
-            <div class="section-header"><div class="section-title">User Management</div></div>
+        <div class="grid-3" id="subsGrid"></div>
+      </section>
+
+      <!-- ════ PAGE 5: AI ANALYTICS & HEALTH ════ -->
+      <section class="page-view" id="page-analytics">
+        <div class="ai-advisor-card">
+          <div class="ai-icon">🤖</div>
+          <div style="flex:1;">
+            <div style="font-size:18px; font-weight:800; margin-bottom:4px;">AI Financial Health Advisor</div>
+            <div style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;" id="aiAdvisorText">Analyzing your cashflow, savings velocity, and budget limits...</div>
+            <div style="display:flex; gap:16px; align-items:center;">
+              <div style="background:var(--surface-input); padding:8px 14px; border-radius:var(--radius-md); border:1px solid var(--border);">
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Health Score</span>
+                <span style="font-size:20px; font-weight:800; font-family:var(--font-mono); color:var(--primary);" id="healthScoreVal">88 / 100</span>
+              </div>
+              <div style="background:var(--surface-input); padding:8px 14px; border-radius:var(--radius-md); border:1px solid var(--border);">
+                <span style="font-size:11px; color:var(--text-muted); display:block;">Burn Velocity</span>
+                <span style="font-size:20px; font-weight:800; font-family:var(--font-mono); color:var(--cyan);" id="burnRateVal">Optimal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Monthly Cashflow Analytics</div>
+            </div>
+            <div class="chart-container">
+              <canvas id="analyticsBarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Spending Velocity by Category</div>
+            </div>
+            <div id="categoryProgressList" style="display:flex; flex-direction:column; gap:16px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ PAGE 6: SETTINGS & BACKUP ════ -->
+      <section class="page-view" id="page-settings">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Profile Preferences</div>
+            </div>
             <div class="form-group">
-                <label class="form-label">Current Active Role</label>
-                <div class="role-badge admin" style="width:fit-content; margin-bottom:12px;">⚡ Active Session</div>
-                <p style="font-size:13px; color:var(--text2); margin-bottom:16px;">
-                    You are currently logged in as an <strong>Administrator</strong>. You have full access to add, edit, and delete records.
-                </p>
-                <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
-            </div>
-        </div>
-
-        <div class="card card-lg">
-            <div class="section-header"><div class="section-title">Quick Actions</div></div>
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <button class="btn btn-primary" onclick="openModal()">＋ Add New Transaction</button>
-                <button class="btn btn-ghost" onclick="exportCSV()">⇣ Export All Data (CSV)</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="card card-lg" style="margin-top:16px; border-color:var(--red);">
-        <div class="section-header">
-            <div class="section-title" style="color:var(--red);">Danger Zone</div>
-        </div>
-        <p style="font-size:13px; color:var(--text2); margin-bottom:16px;">
-            Resetting data will clear all local storage and restore mock data. This action simulates a system wipe.
-        </p>
-        <button class="btn btn-danger" onclick="resetAllData()">⌀ Reset All Application Data</button>
-    </div>
-  </div>
-
-  <!-- ═══ PAGE: SETTINGS ═══ -->
-  <div class="page" id="page-settings">
-    <div class="page-header">
-      <h1>Settings</h1>
-      <p>Manage your account and preferences</p>
-    </div>
-    <div class="grid-2">
-        <div class="card card-lg">
-            <div class="section-header"><div class="section-title">Profile & Appearance</div></div>
-            <div class="form-group">
-                <label class="form-label">User Name</label>
-                <input class="form-input" type="text" id="settingsName" value="Alex Kumar">
+              <label class="form-label">User Display Name</label>
+              <input type="text" class="form-input" id="settingName" value="Alex Kumar">
             </div>
             <div class="form-group">
-                <label class="form-label">Theme</label>
-                <div style="display:flex;gap:10px;">
-                    <button class="btn btn-ghost" id="btnThemeDark" onclick="setTheme('dark')" style="flex:1;">Dark Mode</button>
-                    <button class="btn btn-ghost" id="btnThemeLight" onclick="setTheme('light')" style="flex:1;">Light Mode</button>
-                </div>
+              <label class="form-label">Primary Currency</label>
+              <select class="form-select" id="settingCurrency" onchange="changeCurrency(this.value)">
+                <option value="INR">INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
             </div>
-            <div class="modal-footer" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
-                <button class="btn btn-primary" onclick="saveProfileSettings()">Save Profile</button>
-            </div>
-        </div>
+            <button class="btn btn-primary" onclick="saveUserSettings()">Save Changes</button>
+          </div>
 
-        <div class="card card-lg">
-            <div class="section-header"><div class="section-title">Session</div></div>
-            <div class="form-group">
-                <label class="form-label">Current Role</label>
-                <div class="role-badge" id="settingsRoleDisplay" style="width:fit-content; margin-bottom:12px;">👁 Viewer</div>
-                <p style="font-size:12px; color:var(--text3); margin-bottom:16px;">
-                    To switch roles, you must log out and log back in.
-                </p>
-                <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Data Backup & Restore</div>
             </div>
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+              Export your full workspace backup as a JSON file or restore from a previous backup.
+            </p>
+            <div class="filter-group mb-20">
+              <button class="btn btn-ghost" onclick="exportJSONBackup()">⇣ Export JSON Backup</button>
+              <button class="btn btn-secondary" onclick="document.getElementById('jsonFileInput').click()">⇡ Restore Backup</button>
+              <input type="file" id="jsonFileInput" style="display:none;" accept=".json" onchange="importJSONBackup(event)">
+            </div>
+            <hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">
+            <div style="color:var(--rose); font-weight:700; margin-bottom:6px;">Danger Zone</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Wipe all stored transactions and reset to default demo data.</p>
+            <button class="btn btn-danger" onclick="resetAllData()">Wipe & Reset Application Data</button>
+          </div>
         </div>
-    </div>
+      </section>
+
+    </main>
   </div>
 </div>
 
-<!-- ═══ MODAL ═══ -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
-  <div class="modal">
+<!-- ════ MODALS ════ -->
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="txnModal">
+  <div class="modal-container">
     <div class="modal-header">
-      <div class="modal-title" id="modalTitle">Add Transaction</div>
-      <button class="icon-btn" onclick="closeModal()">✕</button>
+      <div class="modal-title" id="txnModalTitle">Add Transaction</div>
+      <button class="icon-btn" onclick="closeModal('txnModal')">✕</button>
     </div>
     <div class="form-group">
       <label class="form-label">Description</label>
-      <input class="form-input" type="text" id="fDesc" placeholder="e.g. Netflix subscription">
+      <input type="text" class="form-input" id="txDesc" placeholder="e.g. Grocery Shopping, Salary">
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Amount (₹)</label>
-        <input class="form-input" type="number" id="fAmount" placeholder="0.00" min="0" step="0.01">
+        <label class="form-label">Amount</label>
+        <input type="number" class="form-input" id="txAmount" placeholder="0.00" step="0.01">
       </div>
       <div class="form-group">
-        <label class="form-label">Type</label>
-        <select class="form-input" id="fType">
+        <label class="form-label">Transaction Type</label>
+        <select class="form-select" id="txType">
           <option value="expense">Expense</option>
           <option value="income">Income</option>
         </select>
@@ -349,32 +418,99 @@
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Category</label>
-        <select class="form-input" id="fCat">
-          <option value="food">Food</option>
-          <option value="transport">Transport</option>
-          <option value="shopping">Shopping</option>
-          <option value="utilities">Utilities</option>
-          <option value="health">Health</option>
-          <option value="entertainment">Entertainment</option>
-          <option value="salary">Salary</option>
-          <option value="freelance">Freelance</option>
-          <option value="investment">Investment</option>
-          <option value="other">Other</option>
-        </select>
+        <select class="form-select" id="txCategory"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Date</label>
-        <input class="form-input" type="date" id="fDate">
+        <input type="date" class="form-input" id="txDate">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveTransaction()" id="saveBtn">Save Transaction</button>
+      <button class="btn btn-ghost" onclick="closeModal('txnModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTransaction()">Save Entry</button>
     </div>
   </div>
 </div>
 
-<!-- TOASTS -->
+<!-- Goal Modal -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">New Savings Goal</div>
+      <button class="icon-btn" onclick="closeModal('goalModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Goal Title</label>
+      <input type="text" class="form-input" id="goalTitle" placeholder="e.g. Emergency Vault, Vacation">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Target Amount</label>
+        <input type="number" class="form-input" id="goalTarget" placeholder="50000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Saved</label>
+        <input type="number" class="form-input" id="goalCurrent" placeholder="10000">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('goalModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGoal()">Create Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Limit Modal -->
+<div class="modal-overlay" id="budgetModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">Set Category Budget</div>
+      <button class="icon-btn" onclick="closeModal('budgetModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="budgetCategorySelect"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monthly Limit</label>
+      <input type="number" class="form-input" id="budgetLimitInput" placeholder="15000">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('budgetModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBudgetLimit()">Set Limit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Subscription Modal -->
+<div class="modal-overlay" id="subModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">Add Subscription</div>
+      <button class="icon-btn" onclick="closeModal('subModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Service Name</label>
+      <input type="text" class="form-input" id="subName" placeholder="e.g. Netflix, Gym">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cost</label>
+        <input type="number" class="form-input" id="subCost" placeholder="649">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Billing Day of Month</label>
+        <input type="number" class="form-input" id="subDay" min="1" max="31" placeholder="15">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('subModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSubscription()">Add Subscription</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="script.js"></script>
