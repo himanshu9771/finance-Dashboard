@@ -15,6 +15,99 @@
 </head>
 <body>
 
+<!-- ════ AUTHENTICATION / LOGIN OVERLAY ════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">💎</div>
+      <div class="login-title">Finova <span>Pro</span></div>
+      <div class="login-subtitle">Sign in to access your personal workspace</div>
+    </div>
+
+    <!-- Auth Tabs -->
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</div>
+      <div class="auth-tab" id="tabSignUp" onclick="switchAuthTab('signup')">Create Account</div>
+    </div>
+
+    <!-- Sign In Form -->
+    <form id="formSignIn" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="e.g. alex@finova.io" style="width:100%;" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="loginPass" placeholder="••••••••" style="width:100%;" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">Sign In to Dashboard</button>
+    </form>
+
+    <!-- Sign Up Form (Hidden by default) -->
+    <form id="formSignUp" onsubmit="handleRegister(event)" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="regName" placeholder="e.g. Alex Kumar" style="width:100%;" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" id="regEmail" placeholder="alex@finova.io" style="width:100%;" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account Role</label>
+        <select class="form-select" id="regRole" style="width:100%;">
+          <option value="user">Standard User (Personal Workspace)</option>
+          <option value="admin">System Admin (Full System Control)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="regPass" placeholder="••••••••" style="width:100%;" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">Register Account</button>
+    </form>
+
+    <!-- Quick Demo Logins -->
+    <div style="margin-top:24px; border-top:1px solid var(--border); padding-top:16px;">
+      <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">⚡ Quick Demo Accounts</div>
+      <div class="demo-account-list">
+        <div class="demo-account-item" onclick="demoLogin('u1')">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="user-avatar" style="width:30px; height:30px; font-size:11px;">AK</div>
+            <div>
+              <div style="font-weight:700; font-size:12px;">Alex Kumar</div>
+              <div style="font-size:10px; color:var(--text-muted);">Standard User</div>
+            </div>
+          </div>
+          <span class="badge-user">User</span>
+        </div>
+
+        <div class="demo-account-item" onclick="demoLogin('u2')">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="user-avatar" style="width:30px; height:30px; font-size:11px; background:linear-gradient(135deg, var(--secondary), var(--purple));">SC</div>
+            <div>
+              <div style="font-weight:700; font-size:12px;">Sarah Chen</div>
+              <div style="font-size:10px; color:var(--text-muted);">Standard User</div>
+            </div>
+          </div>
+          <span class="badge-user">User</span>
+        </div>
+
+        <div class="demo-account-item" onclick="demoLogin('u3')">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="user-avatar" style="width:30px; height:30px; font-size:11px; background:linear-gradient(135deg, var(--amber), #f97316);">AD</div>
+            <div>
+              <div style="font-weight:700; font-size:12px;">Admin Master</div>
+              <div style="font-size:10px; color:var(--text-muted);">System Oversight & Control</div>
+            </div>
+          </div>
+          <span class="badge-admin">Admin</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="app-container">
   
   <!-- ══ Mobile Sidebar Overlay ══ -->
@@ -48,6 +141,12 @@
         <span class="nav-icon">🤖</span> AI Analytics & Health
       </a>
 
+      <!-- Admin Gated Link -->
+      <div class="nav-label admin-only" id="adminNavSection">Administration</div>
+      <a class="nav-link admin-only" id="adminNavLink" data-page="admin" onclick="navigate('admin')">
+        <span class="nav-icon">⚡</span> Master Admin Panel
+      </a>
+
       <div class="nav-label">System</div>
       <a class="nav-link" data-page="settings" onclick="navigate('settings')">
         <span class="nav-icon">⚙️</span> Preferences & Data
@@ -59,8 +158,9 @@
         <div class="user-avatar" id="sidebarAvatar">AK</div>
         <div class="user-details">
           <div class="user-name" id="sidebarName">Alex Kumar</div>
-          <div class="user-status">Pro Account</div>
+          <div class="user-status" id="sidebarRoleBadge">Pro User</div>
         </div>
+        <button class="icon-btn" style="width:30px; height:30px; font-size:12px; color:var(--rose);" onclick="handleLogout()" title="Logout">⏻</button>
       </div>
     </div>
   </aside>
@@ -92,10 +192,16 @@
           <span id="themeIcon">☀️</span>
         </button>
 
+        <!-- Role Pill Badge -->
+        <span class="badge-user" id="topbarRoleBadge">USER</span>
+
         <!-- Quick Add Button -->
         <button class="btn btn-primary" onclick="openTxnModal()">
           <span>＋</span> Add Transaction
         </button>
+
+        <!-- Logout Button -->
+        <button class="icon-btn" onclick="handleLogout()" title="Sign Out">⏻</button>
       </div>
     </header>
 
@@ -342,7 +448,97 @@
         </div>
       </section>
 
-      <!-- ════ PAGE 6: SETTINGS & BACKUP ════ -->
+      <!-- ════ PAGE 6: MASTER ADMIN PANEL ════ -->
+      <section class="page-view" id="page-admin">
+        <div class="welcome-banner" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(244, 63, 94, 0.1)); border-color: rgba(245, 158, 11, 0.3);">
+          <div>
+            <div class="welcome-title">⚡ Master Administration Control</div>
+            <div class="welcome-subtitle">Global oversight, multi-user accounts, and system-wide tracking</div>
+          </div>
+          <div class="filter-group">
+            <button class="btn btn-secondary" onclick="openAddUserModal()">＋ Create System User</button>
+            <button class="btn btn-ghost" onclick="exportGlobalAudit()">⇣ Export System Audit</button>
+          </div>
+        </div>
+
+        <!-- Global Admin Metrics -->
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Total System Users</span>
+              <div class="stat-icon-wrap amber">👥</div>
+            </div>
+            <div class="stat-value" id="adminStatUsers">0</div>
+            <div class="stat-trend trend-up">Active Accounts</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Total System Volume</span>
+              <div class="stat-icon-wrap primary">💰</div>
+            </div>
+            <div class="stat-value" id="adminStatVolume">0.00</div>
+            <div class="stat-trend trend-up">Global Cashflow</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Global Transactions</span>
+              <div class="stat-icon-wrap secondary">📊</div>
+            </div>
+            <div class="stat-value" id="adminStatTxns">0</div>
+            <div class="stat-trend trend-up">System Logs</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">System Health Status</span>
+              <div class="stat-icon-wrap primary">⚡</div>
+            </div>
+            <div class="stat-value" style="color:var(--primary); font-size:20px;">100% Online</div>
+            <div class="stat-trend trend-up">All Engines Normal</div>
+          </div>
+        </div>
+
+        <!-- User Management Table -->
+        <div class="card mb-20">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Registered User Accounts</div>
+              <div class="card-subtitle">Manage roles, inspect workspaces, and control account data</div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name & Email</th>
+                  <th>Role</th>
+                  <th style="text-align:right;">Net Balance</th>
+                  <th style="text-align:center;">Transactions</th>
+                  <th style="text-align:center;">Actions & Controls</th>
+                </tr>
+              </thead>
+              <tbody id="adminUserTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card" style="border-color:var(--rose);">
+          <div class="card-header">
+            <div class="card-title" style="color:var(--rose);">Global Danger Zone</div>
+          </div>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+            Factory reset will restore default demo users (Alex Kumar, Sarah Chen, Admin Master) and reset all data across the system.
+          </p>
+          <button class="btn btn-danger" onclick="factoryResetSystem()">Wipe & Restore Master Factory Defaults</button>
+        </div>
+      </section>
+
+      <!-- ════ PAGE 7: SETTINGS & BACKUP ════ -->
       <section class="page-view" id="page-settings">
         <div class="grid-2">
           <div class="card">
@@ -379,8 +575,8 @@
             </div>
             <hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">
             <div style="color:var(--rose); font-weight:700; margin-bottom:6px;">Danger Zone</div>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Wipe all stored transactions and reset to default demo data.</p>
-            <button class="btn btn-danger" onclick="resetAllData()">Wipe & Reset Application Data</button>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Wipe your workspace data and reset to demo records.</p>
+            <button class="btn btn-danger" onclick="resetAllData()">Reset User Workspace Data</button>
           </div>
         </div>
       </section>
@@ -390,6 +586,35 @@
 </div>
 
 <!-- ════ MODALS ════ -->
+
+<!-- Add User Modal (Admin) -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">Add System User Account</div>
+      <button class="icon-btn" onclick="closeModal('addUserModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input type="text" class="form-input" id="newUserName" placeholder="e.g. David Miller">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" class="form-input" id="newUserEmail" placeholder="david@finova.io">
+    </div>
+    <div class="form-group">
+      <label class="form-label">System Role</label>
+      <select class="form-select" id="newUserRole">
+        <option value="user">Standard User</option>
+        <option value="admin">System Admin</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addUserModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewUser()">Create Account</button>
+    </div>
+  </div>
+</div>
 
 <!-- Transaction Modal -->
 <div class="modal-overlay" id="txnModal">
